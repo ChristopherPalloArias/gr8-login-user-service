@@ -1,0 +1,30 @@
+name: Backend CICD
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v3
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build Docker Image
+        run: docker build -t christopherpallo2000/cp-create-login-service .
+      - name: Publish image to docker hub
+        run: docker push christopherpallo2000/cp-create-login-service:latest   
+
+  deploy: 
+    needs: build
+    runs-on: login-create    
+    steps:
+      - name: Pull image from docker hub
+        run: docker pull christopherpallo2000/cp-create-login-service:latest
+      - name: create Old Container
+        run: docker rm -f createloginService || true
+      - name: Run docker container
+        run: docker run -d --name createloginService -p 8081:8081 christopherpallo2000/cp-create-login-service
